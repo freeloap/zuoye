@@ -1,4 +1,4 @@
-# RoboMaster 机甲大师视觉作业：装甲板 + 数字识别
+# 任务二：RoboMaster 装甲板及数字识别
 
 ## 1. 作业内容
 
@@ -73,6 +73,10 @@ python scripts/train_digit.py --data data/rm_digit --epochs 15 --device 0 --name
 - 装甲板检测：YOLO letterbox，推理尺寸 960×960。
 - 数字识别：从检测框裁剪 ROI，缩放到 128×128 分类输入。
 - ROI 质量门控：过小、极暗/过曝、边缘能量过低时直接输出 `unknown`。
+
+### 数字识别方式
+
+数字识别采用“装甲板检测 + ROI 分类”的两阶段方法。先由 YOLO11s 检出完整装甲板，再按检测框坐标从原始帧裁剪装甲板 ROI，并将 ROI 缩放为 `128×128` 输入 YOLO11n 分类模型。分类模型输出 `1`–`5` 或 `unknown` 类别的概率，取最高概率类别作为当前帧结果；最高置信度低于 `0.72` 时不输出数字，记为 `unknown`。对于过小、过暗、过曝或边缘信息不足的 ROI，在分类前直接拒识。最后以 ByteTrack 的轨迹 ID 关联同一装甲板，并对该轨迹最近 5 帧的分类结果按置信度加权投票，得到稳定的最终数字。
 
 ```bash
 python scripts/infer_advanced_video.py \
